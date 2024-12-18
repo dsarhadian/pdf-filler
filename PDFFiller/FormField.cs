@@ -1,6 +1,6 @@
 namespace PDFFiller
 {
-    public enum FieldType 
+    public enum FieldType
     {
         FIELD_TYPE_NONE = 0,
         FIELD_TYPE_PUSHBUTTON = 1,
@@ -9,7 +9,7 @@ namespace PDFFiller
         FIELD_TYPE_TEXT = 4,
         FIELD_TYPE_LIST = 5,
         FIELD_TYPE_COMBO = 6,
-        FIELD_TYPE_SIGNATURE = 7
+        FIELD_TYPE_SIGNATURE = 7,
     }
 
     public class FormField
@@ -17,5 +17,41 @@ namespace PDFFiller
         public string? Name { get; set; }
         public FieldType? Type { get; set; }
         public string? Value { get; set; }
+
+        public float? Left { get; set; }
+        public float? Right { get; set; }
+        public float? Top { get; set; }
+        public float? Bottom { get; set; }
+        public float? PageNumber { get; set; }
+
+        public float Width
+        {
+            get
+            {
+                if (Right.HasValue && Left.HasValue)
+                {
+                    return Right.Value - Left.Value;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
+
+        public float Height
+        {
+            get
+            {
+                if (Top.HasValue && Bottom.HasValue)
+                {
+                    return Top.Value - Bottom.Value;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
     }
 }

@@ -35,5 +35,5 @@ Edit the JSON and fill in any values.
 Then run:
 
 ```bash
-fill_form --json-file=test.json --pdf-input=form.pdf --pdf-output=out.pdf
+fill_form --json="STRING_OF_JSON" --pdf="BASE64 ENCODED PDF"
 ```
