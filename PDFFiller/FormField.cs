@@ -24,6 +24,8 @@ namespace PDFFiller
         public float? Bottom { get; set; }
         public float? PageNumber { get; set; }
 
+        public int TabOrder { get; set; }
+
         public float Width
         {
             get

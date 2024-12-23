@@ -185,6 +185,8 @@ namespace PDFFiller
                     var right = position[3];
                     var top = position[4];
                     var bottom = position[2];
+                    var acroField = acroFields.GetFieldItem(field.ToString());
+                    var tabOrder = acroField.GetTabOrder(0);
 
                     var formField = new FormField
                     {
@@ -196,10 +198,13 @@ namespace PDFFiller
                         Right = right,
                         Top = top,
                         Bottom = bottom,
+                        TabOrder = tabOrder + 1
                     };
 
                     formFields.Add(formField);
                 }
+
+                formFields = formFields.OrderBy(o => o.TabOrder).ToList();
 
                 var jsonOptions = new JsonSerializerOptions
                 {
