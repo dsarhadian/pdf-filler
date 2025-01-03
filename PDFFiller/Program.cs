@@ -15,28 +15,28 @@ namespace PDFFiller
 
             var rootCommand = new RootCommand("Form processing application");
 
-            // fill_form command
+            // Create the fill_form command
             var fillFormCommand = new Command("fill_form", "Fill a form using JSON data");
 
-            var jsonFileOption = new Option<string>(
-                "--json",
-                "JSON file containing form data"
-            );
+            var jsonFileOption = new Option<string>("--json", "JSON file containing form data");
             var pdfInputOption = new Option<string>("--pdf", "Input PDF file to fill");
+            var pdfFileInput = new Option<FileInfo>("--pdf-file", "PDF file to fill");
 
             fillFormCommand.AddOption(jsonFileOption);
             fillFormCommand.AddOption(pdfInputOption);
+            fillFormCommand.AddOption(pdfFileInput);
 
             fillFormCommand.SetHandler(
-                async (string jsonData, string pdfData) =>
+                (string jsonData, string pdfData, FileInfo pdfFile) =>
                 {
-                    await FillForm(jsonData, pdfData);
+                    FillForm(jsonData, pdfData, pdfFile);
                 },
                 jsonFileOption,
-                pdfInputOption
+                pdfInputOption,
+                pdfFileInput
             );
 
-            // extract_fields command
+            // Create the extract_fields command
             var extractFieldsCommand = new Command(
                 "extract_fields",
                 "Extract fields from a PDF file"
@@ -45,7 +45,9 @@ namespace PDFFiller
                 "--pdf-file",
                 "PDF File to extract data from"
             );
+
             extractFieldsCommand.AddOption(extractFieldsOption);
+
             extractFieldsCommand.SetHandler(
                 (FileInfo pdfFile) =>
                 {
@@ -54,37 +56,64 @@ namespace PDFFiller
                 extractFieldsOption
             );
 
+            // Add commmands to rootCommand
             rootCommand.AddCommand(fillFormCommand);
             rootCommand.AddCommand(extractFieldsCommand);
 
-            return await rootCommand.InvokeAsync(args);
+            return rootCommand.Invoke(args);
         }
 
-        private static async Task FillForm(string jsonData, string pdfData)
+        private static int FillForm(string jsonData, string pdfData, FileInfo pdfFile)
         {
             if (string.IsNullOrEmpty(jsonData))
             {
                 Console.Error.WriteLine("Please provide JSON data");
                 Console.Error.Close();
+                return 1;
             }
 
-            if (string.IsNullOrEmpty(pdfData))
+            if (string.IsNullOrEmpty(pdfData) && pdfFile == null)
             {
                 Console.Error.WriteLine("Please provide PDF input data");
                 Console.Error.Close();
-                return;
+                return 1;
             }
 
             try
             {
                 var jsonDeserializeOptions = new JsonSerializerOptions()
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
                 };
-                var formFields = JsonSerializer.Deserialize<List<FormField>>(jsonData, jsonDeserializeOptions);
-                byte[] pdfBytes = Convert.FromBase64String(pdfData);
+                var formFields = JsonSerializer.Deserialize<List<FormField>>(
+                    jsonData,
+                    jsonDeserializeOptions
+                );
 
-                using (MemoryStream inputPdfStream = new MemoryStream(pdfBytes))
+                MemoryStream? inputPdfStream = null;
+                if (!string.IsNullOrEmpty(pdfData))
+                {
+                    byte[] pdfBytes = Convert.FromBase64String(pdfData);
+                    inputPdfStream = new MemoryStream(pdfBytes);
+                }
+
+                if (pdfFile != null)
+                {
+                    using (FileStream fileStream = File.OpenRead(pdfFile.FullName))
+                    {
+                        inputPdfStream = new MemoryStream();
+                        inputPdfStream.SetLength(fileStream.Length);
+                        fileStream.Read(inputPdfStream.GetBuffer(), 0, (int)fileStream.Length);
+                    }
+                }
+
+                if (inputPdfStream == null)
+                {
+                    Console.Error.WriteLine("Could not create inputPdfStream");
+                    Console.Error.Close();
+                    return 1;
+                }
+
                 using (MemoryStream memoryStream = new MemoryStream())
                 {
                     PdfReader pdfReader = new PdfReader(inputPdfStream);
@@ -95,7 +124,7 @@ namespace PDFFiller
                     {
                         Console.Error.WriteLine("Error deserializing form fields");
                         Console.Error.Close();
-                        return;
+                        return 1;
                     }
 
                     foreach (var formField in formFields)
@@ -148,20 +177,28 @@ namespace PDFFiller
                     stdout.Write(pdfOutput);
                     stdout.Flush();
                 }
+
+                inputPdfStream?.Dispose();
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"An error ocurred while trying to file the PDF: {ex.Message}");
+                Console.Error.WriteLine(
+                    $"An error ocurred while trying to file the PDF: {ex.Message}"
+                );
                 Console.Error.Close();
+
+                return 1;
             }
+
+            return 0;
         }
 
-        private static void ExtractFields(FileInfo file)
+        private static int ExtractFields(FileInfo file)
         {
             if (file == null)
             {
                 Console.WriteLine("Please provide a PDF file");
-                return;
+                return 1;
             }
 
             try
@@ -173,7 +210,7 @@ namespace PDFFiller
                 if (acroFields.Fields.Count == 0)
                 {
                     Console.WriteLine("No form fields found in the PDF");
-                    return;
+                    return 1;
                 }
 
                 foreach (var field in acroFields.Fields.Keys)
@@ -198,7 +235,7 @@ namespace PDFFiller
                         Right = right,
                         Top = top,
                         Bottom = bottom,
-                        TabOrder = tabOrder + 1
+                        TabOrder = tabOrder + 1,
                     };
 
                     formFields.Add(formField);
@@ -220,7 +257,11 @@ namespace PDFFiller
                 Console.WriteLine(
                     $"An error ocurred while trying to run the extract_fields command: {eX.Message}"
                 );
+
+                return 1;
             }
+
+            return 0;
         }
     }
 }
