@@ -1,4 +1,6 @@
-namespace PDFFiller
+using Newtonsoft.Json;
+
+namespace PDFFiller.Models
 {
     public enum FieldType
     {
@@ -14,8 +16,12 @@ namespace PDFFiller
 
     public class FormField
     {
+        [JsonProperty("name")]
         public string? Name { get; set; }
+
         public FieldType? Type { get; set; }
+
+        [JsonProperty("value")]
         public string? Value { get; set; }
 
         public float? Left { get; set; }
