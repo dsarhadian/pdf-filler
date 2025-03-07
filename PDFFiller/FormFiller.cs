@@ -27,11 +27,30 @@ namespace PDFFiller
                     PdfStamper pdfStamper = new PdfStamper(pdfReader, memoryStream);
                     AcroFields acroFields = pdfStamper.AcroFields;
 
+                    BaseFont baseFont = BaseFont.CreateFont(
+                        BaseFont.TIMES_ROMAN,
+                        BaseFont.WINANSI,
+                        BaseFont.NOT_EMBEDDED
+                    );
+
+                    if (formFields == null)
+                    {
+                        return false;
+                    }
+
                     foreach (var formField in formFields)
                     {
+                        if (formField.Value == null)
+                        {
+                            continue;
+                        }
+
                         int typeInt = acroFields.GetFieldType(formField.Name);
 
-                        if ((FieldType)typeInt == FieldType.FIELD_TYPE_PUSHBUTTON)
+                        if (
+                            (FieldType)typeInt == FieldType.FIELD_TYPE_PUSHBUTTON
+                            || (FieldType)typeInt == FieldType.FIELD_TYPE_SIGNATURE
+                        )
                         {
                             Regex regex = new Regex(
                                 @"^data:image/(?<mediaType>[^;]+);base64,(?<data>.*)"
@@ -58,12 +77,19 @@ namespace PDFFiller
 
                                 image.ScaleToFit(rect.Width, 65);
 
-                                image.SetAbsolutePosition(rect.Left, (rect.Bottom - rect.Height));
+                                image.SetAbsolutePosition(rect.Left, rect.Bottom);
                                 pdfStamper.GetOverContent((int)fieldPosition[0]).AddImage(image);
                             }
                         }
                         else
                         {
+                            acroFields.SetFieldProperty(
+                                formField.Name,
+                                "textsize",
+                                formField.FontSize ?? 10.0f,
+                                null
+                            );
+                            acroFields.SetFieldProperty(formField.Name, "textfont", baseFont, null);
                             acroFields.SetField(formField.Name, formField.Value);
                         }
                     }

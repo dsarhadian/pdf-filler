@@ -27,6 +27,12 @@ namespace PDFFiller
                     return false;
                 }
 
+                BaseFont baseFont = BaseFont.CreateFont(
+                    BaseFont.TIMES_ROMAN,
+                    BaseFont.WINANSI,
+                    BaseFont.NOT_EMBEDDED
+                );
+
                 using MemoryStream finalOutputStream = new MemoryStream();
                 Document document = new Document();
                 PdfCopy pdfCopy = new PdfCopy(document, finalOutputStream);
@@ -42,6 +48,7 @@ namespace PDFFiller
 
                     foreach (FormField field in pageEntry.Value)
                     {
+                        acroFields.SetFieldProperty(field.Name, "textfont", baseFont, null);
                         acroFields.SetField(field.Name, field.Value);
                     }
 

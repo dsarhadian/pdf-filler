@@ -30,6 +30,9 @@ namespace PDFFiller.Models
         public float? Bottom { get; set; }
         public float? PageNumber { get; set; }
 
+        [JsonProperty("font_size")]
+        public float? FontSize { get; set; }
+
         public int TabOrder { get; set; }
 
         public float Width
