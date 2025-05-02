@@ -63,7 +63,6 @@ namespace PDFFiller
                             }
                             else
                             {
-                                // acroFields.SetField(formField.Name, match.Groups["data"].Value);
                                 var fieldPosition = acroFields.GetFieldPositions(formField.Name);
                                 Rectangle rect = new Rectangle(
                                     fieldPosition[1],
@@ -75,11 +74,48 @@ namespace PDFFiller
                                     Convert.FromBase64String(match.Groups["data"].Value)
                                 );
 
-                                image.ScaleToFit(rect.Width, 65);
+                                image.ScaleToFit(rect.Width, rect.Height);
 
                                 image.SetAbsolutePosition(rect.Left, rect.Bottom);
                                 pdfStamper.GetOverContent((int)fieldPosition[0]).AddImage(image);
                             }
+                        }
+                        else if (
+                            (FieldType)typeInt == FieldType.FIELD_TYPE_TEXT
+                            && !formField.Value.Contains('\n')
+                        )
+                        {
+                            var fieldPositions = acroFields.GetFieldPositions(formField.Name);
+                            if (fieldPositions != null && fieldPositions.Length == 5)
+                            {
+                                int page = (int)fieldPositions[0];
+                                float left = fieldPositions[1];
+                                float bottom = fieldPositions[2];
+                                float right = fieldPositions[3];
+                                float top = fieldPositions[4];
+
+                                float fontSize = formField.FontSize ?? 10.0f;
+
+                                PdfContentByte cb = pdfStamper.GetOverContent(page);
+                                cb.BeginText();
+                                cb.SetFontAndSize(baseFont, fontSize);
+
+                                float x = left;
+                                float fieldHeight = top - bottom;
+                                float y = bottom + (fieldHeight - fontSize + 2) / 2;
+
+                                cb.ShowTextAligned(
+                                    PdfContentByte.ALIGN_LEFT,
+                                    formField.Value,
+                                    x,
+                                    y,
+                                    0
+                                );
+                                cb.EndText();
+                            }
+
+                            // Remove the actual form field
+                            acroFields.RemoveField(formField.Name);
                         }
                         else
                         {

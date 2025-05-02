@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using iTextSharp.text.pdf;
