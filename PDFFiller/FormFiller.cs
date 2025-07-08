@@ -88,27 +88,20 @@ namespace PDFFiller
                             var fieldPositions = acroFields.GetFieldPositions(formField.Name);
                             if (fieldPositions != null && fieldPositions.Length == 5)
                             {
-                                int page = (int)fieldPositions[0];
-                                float left = fieldPositions[1];
-                                float bottom = fieldPositions[2];
-                                float right = fieldPositions[3];
-                                float top = fieldPositions[4];
-
                                 float fontSize = formField.FontSize ?? 10.0f;
 
+                                int page = (int)fieldPositions[0];
                                 PdfContentByte cb = pdfStamper.GetOverContent(page);
                                 cb.BeginText();
                                 cb.SetFontAndSize(baseFont, fontSize);
 
-                                float x = left;
-                                float fieldHeight = top - bottom;
-                                float y = bottom + (fieldHeight - fontSize + 2) / 2;
+                                (float, float) pos = PositionField(formField, fieldPositions);
 
                                 cb.ShowTextAligned(
                                     PdfContentByte.ALIGN_LEFT,
                                     formField.Value,
-                                    x,
-                                    y,
+                                    pos.Item1,
+                                    pos.Item2,
                                     0
                                 );
                                 cb.EndText();
@@ -151,6 +144,151 @@ namespace PDFFiller
 
                 return false;
             }
+        }
+
+        // private (float, float) PositionField(FormField field, float[] positions)
+        // {
+        //     int page = (int)positions[0];
+        //     float left = positions[1];
+        //     float bottom = positions[2];
+        //     float right = positions[3];
+        //     float top = positions[4];
+        //     float fontSize = field.FontSize ?? 10.0f;
+        //     float fieldHeight = top - bottom;
+        //     float fieldWidth = right - left;
+        //
+        //     float x = 0;
+        //     float y = 0;
+        //
+        //     switch (field.TextAlign)
+        //     {
+        //         case TextAlign.TopLeft:
+        //             x = left;
+        //             y = top - fontSize;
+        //             break;
+        //
+        //         case TextAlign.TopCenter:
+        //             x = left + (fieldWidth / 2);
+        //             y = top - fontSize;
+        //             break;
+        //
+        //         case TextAlign.TopRight:
+        //             x = right;
+        //             y = top - fontSize;
+        //             break;
+        //
+        //         case TextAlign.CenterLeft:
+        //             x = left;
+        //             y = bottom + (fieldHeight - fontSize) / 2;
+        //             break;
+        //
+        //         case TextAlign.CenterCenter:
+        //             x = left + (fieldWidth / 2);
+        //             y = bottom + (fieldHeight - fontSize) / 2;
+        //             break;
+        //
+        //         case TextAlign.CenterRight:
+        //             x = right;
+        //             y = bottom + (fieldHeight - fontSize) / 2;
+        //             break;
+        //
+        //         case TextAlign.BottomLeft:
+        //             x = left;
+        //             y = bottom;
+        //             break;
+        //
+        //         case TextAlign.BottomCenter:
+        //             x = left + (fieldWidth / 2);
+        //             y = bottom;
+        //             break;
+        //
+        //         case TextAlign.BottomRight:
+        //             x = right;
+        //             y = bottom;
+        //             break;
+        //     }
+        //
+        //     return (x, y);
+        // }
+
+        private float MeasureTextWidth(string text, float fontSize)
+        {
+            BaseFont baseFont = BaseFont.CreateFont(
+                BaseFont.TIMES_ROMAN,
+                BaseFont.WINANSI,
+                BaseFont.NOT_EMBEDDED
+            );
+
+            return baseFont.GetWidthPoint(text, fontSize);
+        }
+
+        private (float, float) PositionField(FormField field, float[] positions)
+        {
+            int page = (int)positions[0];
+            float left = positions[1];
+            float bottom = positions[2];
+            float right = positions[3];
+            float top = positions[4];
+            float fontSize = field.FontSize ?? 10.0f;
+
+            float fieldHeight = top - bottom;
+            float fieldWidth = right - left;
+
+            string text = field.Value ?? "";
+            float textWidth = MeasureTextWidth(text, fontSize);
+
+            float x = 0;
+            float y = 0;
+
+            switch (field.TextAlign)
+            {
+                case TextAlign.TopLeft:
+                    x = left;
+                    y = top - fontSize;
+                    break;
+
+                case TextAlign.TopCenter:
+                    x = left + (fieldWidth - textWidth) / 2;
+                    y = top - fontSize;
+                    break;
+
+                case TextAlign.TopRight:
+                    x = right - textWidth;
+                    y = top - fontSize;
+                    break;
+
+                case TextAlign.CenterLeft:
+                    x = left;
+                    y = bottom + (fieldHeight - fontSize) / 2;
+                    break;
+
+                case TextAlign.CenterCenter:
+                    x = left + (fieldWidth - textWidth) / 2;
+                    y = bottom + (fieldHeight - fontSize) / 2;
+                    break;
+
+                case TextAlign.CenterRight:
+                    x = right - textWidth;
+                    y = bottom + (fieldHeight - fontSize) / 2;
+                    break;
+
+                case TextAlign.BottomLeft:
+                    x = left;
+                    y = bottom;
+                    break;
+
+                case TextAlign.BottomCenter:
+                    x = left + (fieldWidth - textWidth) / 2;
+                    y = bottom;
+                    break;
+
+                case TextAlign.BottomRight:
+                    x = right - textWidth;
+                    y = bottom;
+                    break;
+            }
+
+            return (x, y);
         }
     }
 }

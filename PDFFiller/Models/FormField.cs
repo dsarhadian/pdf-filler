@@ -14,6 +14,19 @@ namespace PDFFiller.Models
         FIELD_TYPE_SIGNATURE = 7,
     }
 
+    public enum TextAlign
+    {
+        TopLeft = 0,
+        TopCenter = 1,
+        TopRight = 2,
+        CenterLeft = 3,
+        CenterCenter = 4,
+        CenterRight = 5,
+        BottomLeft = 6,
+        BottomCenter = 7,
+        BottomRight = 8,
+    }
+
     public class FormField
     {
         [JsonProperty("name")]
@@ -32,6 +45,9 @@ namespace PDFFiller.Models
 
         [JsonProperty("font_size")]
         public float? FontSize { get; set; }
+
+        [JsonProperty("text_align")]
+        public TextAlign TextAlign { get; set; }
 
         public int TabOrder { get; set; }
 
