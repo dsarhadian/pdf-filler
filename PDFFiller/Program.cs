@@ -11,8 +11,9 @@ namespace PDFFiller
     {
         static int Main(string[] args)
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // while (!Debugger.IsAttached) Thread.Sleep(100);
 
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var rootCommand = new RootCommand("Form processing application");
 
             // Create the fill_form command

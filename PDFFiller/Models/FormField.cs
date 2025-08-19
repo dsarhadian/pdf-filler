@@ -41,6 +41,8 @@ namespace PDFFiller.Models
         public float? Right { get; set; }
         public float? Top { get; set; }
         public float? Bottom { get; set; }
+
+        [JsonProperty("page_number")]
         public float? PageNumber { get; set; }
 
         [JsonProperty("font_size")]
@@ -50,6 +52,15 @@ namespace PDFFiller.Models
         public TextAlign TextAlign { get; set; }
 
         public int TabOrder { get; set; }
+
+        [JsonProperty("field_type")]
+        public string? JsonFieldType { get; set; }
+
+        [JsonProperty("width")]
+        public float? JsonWidth { get; set; }
+
+        [JsonProperty("height")]
+        public float? JsonHeight { get; set; }
 
         public float Width
         {
