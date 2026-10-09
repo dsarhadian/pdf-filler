@@ -118,7 +118,7 @@ namespace PDFFiller
                     float centeredY =
                         fieldY + (formField.JsonHeight.Value - image.ScaledHeight) / 2;
 
-                    image.SetAbsolutePosition(centeredX, centeredY);
+                    image.SetAbsolutePosition(fieldX, centeredY);
                     cb.AddImage(image);
                 }
             }
